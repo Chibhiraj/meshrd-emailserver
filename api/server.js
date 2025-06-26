@@ -2,10 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const Mailgun = require('mailgun.js');
 const formData = require('form-data');
-require('dotenv').config();
+const serverless = require('serverless-http');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
@@ -15,41 +14,30 @@ app.use(express.json());
 const mailgun = new Mailgun(formData);
 const mg = mailgun.client({
   username: 'api',
-  key: process.env.MAILGUN_API_KEY,
-  url: 'https://api.mailgun.net', // default, can omit
+  key: '2423c11de6105483992a92a03a3ba170-a1dad75f-603385aa',  // use environment variable
+  url: 'https://api.mailgun.net',
 });
 
-// Email sending endpoint
 app.post('/api/send-email', async (req, res) => {
   try {
     const { name, email, phone, message } = req.body;
 
-    // Validation
     if (!name || !email || !phone || !message) {
-      return res.status(400).json({
-        success: false,
-        message: 'All fields are required'
-      });
+      return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid email format'
-      });
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
     }
 
     if (!/^\d{10}$/.test(phone)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Phone number must be exactly 10 digits'
-      });
+      return res.status(400).json({ success: false, message: 'Phone number must be exactly 10 digits' });
     }
 
     const messageData = {
       from: process.env.MAILGUN_FROM_EMAIL || 'noreply@meshrdtechnologies.com',
-      to: process.env.MAILGUN_TO_EMAIL || 'contact@meshrdtechnologies.com',
+      to: process.env.MAILGUN_TO_EMAIL || 'meshrd-official@meshrd.com',
       subject: `New Contact Form Submission from ${name}`,
       text: `
         Name: ${name}
@@ -68,35 +56,21 @@ app.post('/api/send-email', async (req, res) => {
       `
     };
 
-    const response = await mg.messages.create(process.env.MAILGUN_DOMAIN, messageData);
+    const response = await mg.messages.create(
+      'sandbox4a598964044d4be79c3f89e41a918739.mailgun.org',
+      messageData
+    );
 
-    res.json({
-      success: true,
-      message: 'Email sent successfully',
-      id: response.id
-    });
+    res.json({ success: true, message: 'Email sent successfully', id: response.id });
 
   } catch (error) {
-    console.error('Email sending error:', {
-      message: error.message,
-      stack: error.stack,
-      ...(error.response?.body && { responseBody: error.response.body })
-    });
-
-    res.status(500).json({
-      success: false,
-      message: 'Failed to send email',
-      error: error.message
-    });
+    console.error('Email sending error:', error);
+    res.status(500).json({ success: false, message: 'Failed to send email', error: error.message });
   }
 });
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`✅ Server is running on port ${PORT}`);
-});
+module.exports = serverless(app);
