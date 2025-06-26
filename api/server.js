@@ -4,6 +4,8 @@ const Mailgun = require('mailgun.js');
 const formData = require('form-data');
 const serverless = require('serverless-http');
 
+require('dotenv').config(); // Optional if using .env locally
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -59,6 +61,5 @@ app.post('/send-email', async (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
-
 
 module.exports = serverless(app);
