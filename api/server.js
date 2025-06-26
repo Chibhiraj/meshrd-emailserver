@@ -5,12 +5,9 @@ const formData = require('form-data');
 const serverless = require('serverless-http');
 
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Initialize Mailgun
 const mailgun = new Mailgun(formData);
 const mg = mailgun.client({
   username: 'api',
@@ -18,7 +15,7 @@ const mg = mailgun.client({
   url: 'https://api.mailgun.net',
 });
 
-app.post('/api/send-email', async (req, res) => {
+app.post('/send-email', async (req, res) => {
   try {
     const { name, email, phone, message } = req.body;
 
@@ -39,27 +36,17 @@ app.post('/api/send-email', async (req, res) => {
       from: process.env.MAILGUN_FROM_EMAIL || 'noreply@meshrdtechnologies.com',
       to: process.env.MAILGUN_TO_EMAIL || 'meshrd-official@meshrd.com',
       subject: `New Contact Form Submission from ${name}`,
-      text: `
-        Name: ${name}
-        Email: ${email}
-        Phone: ${phone}
-        Message: ${message}
-      `,
+      text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\nMessage: ${message}`,
       html: `
         <h2>New Contact Form Submission</h2>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Phone:</strong> ${phone}</p>
         <p><strong>Message:</strong><br>${message.replace(/\n/g, '<br>')}</p>
-        <hr>
-        <p><em>This message was sent from the contact form on your website.</em></p>
       `
     };
 
-    const response = await mg.messages.create(
-      'sandbox4a598964044d4be79c3f89e41a918739.mailgun.org',
-      messageData
-    );
+    const response = await mg.messages.create('sandbox4a598964044d4be79c3f89e41a918739.mailgun.org', messageData);
 
     res.json({ success: true, message: 'Email sent successfully', id: response.id });
 
@@ -69,8 +56,9 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
+
 
 module.exports = serverless(app);
