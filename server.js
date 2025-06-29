@@ -15,7 +15,7 @@ app.use(express.json());
 const mailgun = new Mailgun(formData);
 const mg = mailgun.client({
   username: 'api',
-  key: '2423c11de6105483992a92a03a3ba170-a1dad75f-603385aa',  // ✅ Move key to .env
+  key: process.env.MAILGUN_API_KEY,
   url: 'https://api.mailgun.net',
 });
 
@@ -48,8 +48,8 @@ app.post('/api/send-email', async (req, res) => {
     }
 
     const messageData = {
-      from: process.env.MAILGUN_FROM_EMAIL || 'noreply@meshrdtechnologies.com',
-      to: process.env.MAILGUN_TO_EMAIL || 'meshrd-official@meshrd.com',
+      from: process.env.MAILGUN_FROM_EMAIL,
+      to: process.env.MAILGUN_TO_EMAIL,
       subject: `New Contact Form Submission from ${name}`,
       text: `
         Name: ${name}
@@ -69,7 +69,7 @@ app.post('/api/send-email', async (req, res) => {
     };
 
     const response = await mg.messages.create(
-      process.env.MAILGUN_DOMAIN || "sandbox4a598964044d4be79c3f89e41a918739.mailgun.org",
+      process.env.MAILGUN_DOMAIN,
       messageData
     );
 
